@@ -3,7 +3,10 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
 
+const base = process.env.BASE_PATH ?? '/'
+
 export default defineConfig({
+  base,
   plugins: [
     vue(),
     VitePWA({
@@ -22,21 +25,21 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         lang: 'pt-BR',
-        start_url: '/',
-        scope: '/',
+        start_url: base,
+        scope: base,
         icons: [
           {
-            src: '/pwa-192.png',
+            src: `${base}pwa-192.png`,
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: '/pwa-512.png',
+            src: `${base}pwa-512.png`,
             sizes: '512x512',
             type: 'image/png',
           },
           {
-            src: '/pwa-maskable-512.png',
+            src: `${base}pwa-maskable-512.png`,
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
@@ -46,6 +49,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,ico,svg,woff,woff2,json}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        navigateFallback: `${base}index.html`,
         runtimeCaching: [
           {
             urlPattern: /\/hinos\.json$/,

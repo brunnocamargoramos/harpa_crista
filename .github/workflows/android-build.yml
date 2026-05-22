@@ -5,6 +5,9 @@ on:
     branches: [master, main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -45,10 +48,30 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk harpa-crista.apk
+
+      - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: harpa-crista-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: harpa-crista-apk
+          path: harpa-crista.apk
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publish latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Versão mais recente (master)
+          prerelease: true
+          files: harpa-crista.apk
+          body: |
+            APK gerado automaticamente do último build em `master`.
+
+            **Como instalar:**
+            1. Baixe o arquivo `harpa-crista.apk` abaixo
+            2. No celular Android, libere "Instalar de fontes desconhecidas" pro seu navegador/gerenciador de arquivos
+            3. Abra o `.apk` baixado e toque em **Instalar**
+
+            > Esta release é substituída a cada novo push em `master`.

@@ -6,7 +6,7 @@
 **Hinário completo da Harpa Cristã — rápido, bonito e funciona offline.**
 
 [![Acessar Online](https://img.shields.io/badge/Acessar-Online-1f4f4a?style=for-the-badge&logo=googlechrome&logoColor=white)](https://brunnocamargoramos.github.io/harpa_crista/)
-[![Baixar APK](https://img.shields.io/badge/Baixar-APK%20Android-5ba894?style=for-the-badge&logo=android&logoColor=white)](https://github.com/brunnocamargoramos/harpa_crista/actions/workflows/android-build.yml)
+[![Baixar APK](https://img.shields.io/badge/Baixar-APK%20Android-5ba894?style=for-the-badge&logo=android&logoColor=white)](https://github.com/brunnocamargoramos/harpa_crista/releases/download/latest/harpa-crista.apk)
 
 [![Vue 3](https://img.shields.io/badge/Vue-3-42b883?logo=vue.js&logoColor=white)](https://vuejs.org)
 [![Vite](https://img.shields.io/badge/Vite-5-646cff?logo=vite&logoColor=white)](https://vitejs.dev)
@@ -43,10 +43,15 @@ Pra instalar como app, abra no Chrome/Edge → menu **⋮** → **"Instalar app"
 
 ### Android (APK)
 
-1. Vá em [**Actions → Build Android APK**](https://github.com/brunnocamargoramos/harpa_crista/actions/workflows/android-build.yml)
-2. Clique no último build com sucesso
-3. Role até **Artifacts** e baixe `harpa-crista-debug-apk.zip`
-4. Extraia e instale o `.apk` no celular (libere "Fontes desconhecidas" se necessário)
+Baixe direto do celular:
+
+**👉 [harpa-crista.apk](https://github.com/brunnocamargoramos/harpa_crista/releases/download/latest/harpa-crista.apk)** *(sempre a versão mais recente)*
+
+1. Abra o link acima no navegador do celular
+2. Libere "Instalar de fontes desconhecidas" pro seu navegador, se pedir
+3. Abra o `.apk` baixado e toque em **Instalar**
+
+> Releases anteriores e changelog: [github.com/brunnocamargoramos/harpa_crista/releases](https://github.com/brunnocamargoramos/harpa_crista/releases)
 
 ## 🛠️ Stack
 

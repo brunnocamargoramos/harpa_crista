@@ -1,25 +1,23 @@
-import Vue from 'vue'
-import VueRouter, { RouteConfig } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import Hino from '../views/HinoView.vue'
+import { createRouter, createWebHistory } from '@ionic/vue-router'
+import type { RouteRecordRaw } from 'vue-router'
+import HomeView from '@/views/HomeView.vue'
 
-Vue.use(VueRouter)
-
-const routes: Array<RouteConfig> = [
+const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
-    component: HomeView
+    component: HomeView,
   },
   {
     path: '/hino/:id?',
     name: 'hino',
-    component: Hino
-  }
+    component: () => import('@/views/HinoView.vue'),
+  },
 ]
 
-const router = new VueRouter({
-  routes
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
+  routes,
 })
 
 export default router

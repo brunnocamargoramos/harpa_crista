@@ -15,7 +15,7 @@ async function buscarHinos(): Promise<Hino[]> {
   if (carregado.value) return hinos.value
   if (promessa) return promessa
   carregando.value = true
-  promessa = fetch('/hinos.json')
+  promessa = fetch(`${import.meta.env.BASE_URL}hinos.json`)
     .then((r) => {
       if (!r.ok) throw new Error('Falha ao carregar hinos')
       return r.json() as Promise<Hino[]>

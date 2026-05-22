@@ -1,6 +1,21 @@
 {
-	"appId": "org.vue.myApp",
-	"appName": "harpaCrista",
+	"appId": "org.harpacrista.app",
+	"appName": "Harpa Cristã",
+	"webDir": "dist",
 	"bundledWebRuntime": false,
-	"webDir": "D:\\harpaCrista\\dist"
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 1500,
+			"launchAutoHide": false,
+			"backgroundColor": "#faf6ec",
+			"showSpinner": false,
+			"androidScaleType": "CENTER_CROP",
+			"splashFullScreen": true,
+			"splashImmersive": false
+		},
+		"StatusBar": {
+			"backgroundColor": "#1f4f4a",
+			"style": "DARK"
+		}
+	}
 }

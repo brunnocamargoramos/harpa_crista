@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">harpaCrista</string>
-    <string name="title_activity_main">harpaCrista</string>
-    <string name="package_name">org.vue.myApp</string>
-    <string name="custom_url_scheme">org.vue.myApp</string>
+    <string name="app_name">Harpa Cristã</string>
+    <string name="title_activity_main">Harpa Cristã</string>
+    <string name="package_name">org.harpacrista.app</string>
+    <string name="custom_url_scheme">org.harpacrista.app</string>
 </resources>

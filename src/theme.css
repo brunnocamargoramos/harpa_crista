@@ -1,0 +1,119 @@
+:root {
+  --ion-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', sans-serif;
+
+  --ion-color-primary: #5ba894;
+  --ion-color-primary-rgb: 91, 168, 148;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #4f9282;
+  --ion-color-primary-tint: #6cb39e;
+
+  --ion-color-secondary: #1f4f4a;
+  --ion-color-secondary-rgb: 31, 79, 74;
+  --ion-color-secondary-contrast: #faf6ec;
+  --ion-color-secondary-contrast-rgb: 250, 246, 236;
+  --ion-color-secondary-shade: #194540;
+  --ion-color-secondary-tint: #355e59;
+
+  --ion-background-color: #faf6ec;
+  --ion-background-color-rgb: 250, 246, 236;
+  --ion-text-color: #1f4f4a;
+  --ion-text-color-rgb: 31, 79, 74;
+  --ion-toolbar-background: #1f4f4a;
+  --ion-item-background: #ffffff;
+
+  --hc-card-shadow: 0 1px 3px rgba(31, 79, 74, 0.08),
+    0 1px 2px rgba(31, 79, 74, 0.04);
+  --hc-card-shadow-hover: 0 4px 12px rgba(31, 79, 74, 0.12);
+  --hc-divider: rgba(31, 79, 74, 0.08);
+  --hc-muted: #6b8682;
+  --hc-chorus-bg: rgba(91, 168, 148, 0.08);
+  --hc-chorus-border: #5ba894;
+  --hc-paper: #faf6ec;
+}
+
+html.dark {
+  --ion-background-color: #0d1f1d;
+  --ion-background-color-rgb: 13, 31, 29;
+  --ion-text-color: #e8efed;
+  --ion-text-color-rgb: 232, 239, 237;
+  --ion-toolbar-background: #102a27;
+  --ion-item-background: #163632;
+
+  --ion-color-primary: #7ec5b3;
+  --ion-color-primary-rgb: 126, 197, 179;
+  --ion-color-primary-contrast: #0d1f1d;
+  --ion-color-primary-contrast-rgb: 13, 31, 29;
+  --ion-color-primary-shade: #6fb0a0;
+  --ion-color-primary-tint: #8accbb;
+
+  --ion-color-secondary: #d4a017;
+  --ion-color-secondary-rgb: 212, 160, 23;
+  --ion-color-secondary-contrast: #0d1f1d;
+  --ion-color-secondary-shade: #bb8d14;
+  --ion-color-secondary-tint: #d8aa2e;
+
+  --hc-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --hc-card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --hc-divider: rgba(255, 255, 255, 0.08);
+  --hc-muted: #94a8a4;
+  --hc-chorus-bg: rgba(126, 197, 179, 0.1);
+  --hc-chorus-border: #7ec5b3;
+  --hc-paper: #163632;
+}
+
+ion-content {
+  --background: var(--ion-background-color);
+}
+
+ion-toolbar {
+  --background: var(--ion-toolbar-background);
+  --color: #ffffff;
+}
+
+.hino-content {
+  font-family: 'Crimson Pro', 'Georgia', serif;
+  line-height: 1.6;
+  color: var(--ion-text-color);
+  text-align: center;
+  letter-spacing: 0.01em;
+  white-space: normal;
+}
+
+.hino-content .verso-num {
+  display: inline-block;
+  min-width: 1.8em;
+  padding: 0.1em 0.55em;
+  margin: 0.6em 0 0.3em;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7em;
+  font-weight: 700;
+  color: var(--ion-color-primary-contrast);
+  background: var(--ion-color-primary);
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+}
+
+.hino-content strong {
+  display: inline-block;
+  margin: 0.6em auto;
+  padding: 0.8em 1em;
+  background: var(--hc-chorus-bg);
+  border-left: 3px solid var(--hc-chorus-border);
+  border-radius: 6px;
+  font-weight: 500;
+  font-style: italic;
+  text-align: center;
+}
+
+.hino-autor {
+  margin-top: 1.5em;
+  padding-top: 1em;
+  border-top: 1px solid var(--hc-divider);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85em;
+  color: var(--hc-muted);
+  text-align: center;
+}

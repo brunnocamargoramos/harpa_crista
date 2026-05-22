@@ -1,5 +1,6 @@
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
+export type ModoTema = 'auto' | 'light' | 'dark'
 export type Tema = 'light' | 'dark'
 
 const STORAGE_KEY = 'tema'
@@ -8,8 +9,37 @@ const COR_HEADER: Record<Tema, string> = {
   dark: '#102a27',
 }
 
-const tema = ref<Tema>(
-  document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+function lerSistema(): Tema {
+  if (
+    typeof window !== 'undefined' &&
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  ) {
+    return 'dark'
+  }
+  return 'light'
+}
+
+function lerStorage(): ModoTema {
+  if (typeof localStorage === 'undefined') return 'auto'
+  const v = localStorage.getItem(STORAGE_KEY)
+  if (v === 'light' || v === 'dark' || v === 'auto') return v
+  return 'auto'
+}
+
+const modo = ref<ModoTema>(lerStorage())
+const sistemaTema = ref<Tema>(lerSistema())
+
+if (typeof window !== 'undefined' && window.matchMedia) {
+  const mq = window.matchMedia('(prefers-color-scheme: dark)')
+  const handler = (e: MediaQueryListEvent) => {
+    sistemaTema.value = e.matches ? 'dark' : 'light'
+  }
+  if ('addEventListener' in mq) mq.addEventListener('change', handler)
+  else (mq as MediaQueryList).addListener(handler)
+}
+
+const tema = computed<Tema>(() =>
+  modo.value === 'auto' ? sistemaTema.value : modo.value
 )
 
 function aplicar(t: Tema) {
@@ -19,11 +49,24 @@ function aplicar(t: Tema) {
     ?.setAttribute('content', COR_HEADER[t])
 }
 
-export function useTheme() {
-  function toggleTema() {
-    tema.value = tema.value === 'dark' ? 'light' : 'dark'
-    aplicar(tema.value)
-    localStorage.setItem(STORAGE_KEY, tema.value)
+aplicar(tema.value)
+watch(tema, (novo) => aplicar(novo))
+
+function cicloTema() {
+  const proximo: ModoTema =
+    modo.value === 'auto'
+      ? tema.value === 'dark'
+        ? 'light'
+        : 'dark'
+      : modo.value === 'dark'
+        ? 'light'
+        : 'auto'
+  modo.value = proximo
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(STORAGE_KEY, proximo)
   }
-  return { tema, toggleTema }
+}
+
+export function useTheme() {
+  return { tema, modo, cicloTema }
 }

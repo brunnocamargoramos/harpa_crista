@@ -23,8 +23,7 @@
         />
         <div class="hc-chips">
           <ion-chip
-            :color="filtroFav ? 'primary' : 'medium'"
-            :outline="!filtroFav"
+            :class="{ 'hc-chip-ativo': filtroFav }"
             @click="alternarFiltroFav"
           >
             <ion-icon :icon="filtroFav ? star : starOutline" />
@@ -297,6 +296,11 @@ async function voltarTopo() {
 
 .hc-searchbar {
   --background: var(--ion-item-background);
+  --color: var(--ion-text-color);
+  --placeholder-color: var(--hc-muted);
+  --placeholder-opacity: 1;
+  --icon-color: var(--hc-muted);
+  --clear-button-color: var(--hc-muted);
   --border-radius: 12px;
   --box-shadow: var(--hc-card-shadow);
   padding: 0 8px;
@@ -306,6 +310,18 @@ async function voltarTopo() {
   padding: 6px 12px 0;
   display: flex;
   gap: 6px;
+}
+
+.hc-chips ion-chip {
+  --background: var(--ion-item-background);
+  --color: var(--ion-text-color);
+  border: 1px solid var(--hc-divider);
+  box-shadow: var(--hc-card-shadow);
+}
+.hc-chips ion-chip.hc-chip-ativo {
+  --background: var(--ion-color-primary);
+  --color: var(--ion-color-primary-contrast);
+  border-color: transparent;
 }
 
 .hc-skeleton {

@@ -21,13 +21,10 @@
       <ion-buttons slot="end">
         <ion-button
           class="hc-tema-btn"
-          :aria-label="tema === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro'"
-          @click="toggleTema"
+          :aria-label="`Tema ${modoLabel} — toque para alternar`"
+          @click="cicloTema"
         >
-          <ion-icon
-            slot="icon-only"
-            :icon="tema === 'dark' ? sunnyOutline : moonOutline"
-          />
+          <ion-icon slot="icon-only" :icon="iconeTema" />
         </ion-button>
       </ion-buttons>
     </ion-toolbar>
@@ -44,7 +41,13 @@ import {
   IonIcon,
   IonBackButton,
 } from '@ionic/vue'
-import { chevronBack, moonOutline, sunnyOutline } from 'ionicons/icons'
+import { computed } from 'vue'
+import {
+  chevronBack,
+  contrastOutline,
+  moonOutline,
+  sunnyOutline,
+} from 'ionicons/icons'
 import { useTheme } from '@/composables/useTheme'
 
 withDefaults(
@@ -60,7 +63,23 @@ withDefaults(
   }
 )
 
-const { tema, toggleTema } = useTheme()
+const { modo, cicloTema } = useTheme()
+
+const iconeTema = computed(() =>
+  modo.value === 'auto'
+    ? contrastOutline
+    : modo.value === 'dark'
+      ? moonOutline
+      : sunnyOutline
+)
+
+const modoLabel = computed(() =>
+  modo.value === 'auto'
+    ? 'automático'
+    : modo.value === 'dark'
+      ? 'escuro'
+      : 'claro'
+)
 </script>
 
 <style scoped>

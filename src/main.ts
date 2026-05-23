@@ -28,19 +28,46 @@ import './theme.css'
 
 import { Capacitor } from '@capacitor/core'
 
-async function initNative() {
+async function esconderSplash() {
+  if (!Capacitor.isNativePlatform()) return
+  try {
+    const { SplashScreen } = await import('@capacitor/splash-screen')
+    await SplashScreen.hide({ fadeOutDuration: 100 })
+  } catch {
+    /* ignora */
+  }
+}
+
+async function configurarStatusBar() {
   if (!Capacitor.isNativePlatform()) return
   try {
     const { StatusBar, Style } = await import('@capacitor/status-bar')
     const escuro = document.documentElement.classList.contains('dark')
-    await StatusBar.setBackgroundColor({ color: escuro ? '#102a27' : '#1f4f4a' })
+    const sepia = document.documentElement.classList.contains('sepia')
+    const cor = escuro ? '#102a27' : sepia ? '#6e5436' : '#1f4f4a'
+    await StatusBar.setBackgroundColor({ color: cor })
     await StatusBar.setStyle({ style: Style.Dark })
   } catch {
     /* ignora */
   }
+}
+
+async function configurarDeepLinks() {
+  if (!Capacitor.isNativePlatform()) return
   try {
-    const { SplashScreen } = await import('@capacitor/splash-screen')
-    await SplashScreen.hide({ fadeOutDuration: 300 })
+    const { App: CapApp } = await import('@capacitor/app')
+    const tratarUrl = (url: string) => {
+      const match = url.match(/hino\/(\d+)/i)
+      if (match) {
+        const id = match[1]
+        router.replace({ name: 'hino', params: { id } })
+      }
+    }
+    const inicial = await CapApp.getLaunchUrl()
+    if (inicial?.url) tratarUrl(inicial.url)
+    CapApp.addListener('appUrlOpen', (ev) => {
+      if (ev.url) tratarUrl(ev.url)
+    })
   } catch {
     /* ignora */
   }
@@ -50,5 +77,7 @@ const app = createApp(App).use(IonicVue).use(router)
 
 router.isReady().then(() => {
   app.mount('#app')
-  initNative()
+  esconderSplash()
+  configurarStatusBar()
+  configurarDeepLinks()
 })

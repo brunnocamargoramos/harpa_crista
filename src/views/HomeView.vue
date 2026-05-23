@@ -2,9 +2,7 @@
   <ion-page>
     <AppHeader
       title="Harpa Cristã"
-      :subtitle="
-        carregado ? `${itemsFiltrados.length} de ${hinos.length} hinos` : ''
-      "
+      :subtitle="carregado ? `${hinos.length} hinos` : ''"
     />
     <ion-content
       :fullscreen="true"
@@ -26,7 +24,7 @@
             :class="{ 'hc-chip-ativo': filtroFav }"
             @click="alternarFiltroFav"
           >
-            <ion-icon :icon="filtroFav ? star : starOutline" />
+            <ion-icon :icon="filtroFav ? heart : heartOutline" />
             <ion-label>Favoritos{{ totalFav ? ` (${totalFav})` : '' }}</ion-label>
           </ion-chip>
         </div>
@@ -81,15 +79,25 @@
           <p>
             {{
               filtroFav
-                ? 'Toque na estrela em qualquer hino pra salvá-lo aqui.'
+                ? 'Toque no coração em qualquer hino pra salvá-lo aqui.'
                 : 'Tente outro termo de busca.'
             }}
           </p>
         </div>
 
-        <ion-list v-else lines="none" class="hc-list">
+        <ion-list
+          v-else-if="!quickJump"
+          lines="none"
+          class="hc-list"
+          ref="listRef"
+        >
+          <div
+            v-if="topPad > 0"
+            :style="{ height: topPad + 'px' }"
+            aria-hidden="true"
+          />
           <ion-item
-            v-for="item in itemsFiltrados"
+            v-for="item in itemsVisiveis"
             :key="item.id"
             button
             :detail="false"
@@ -102,7 +110,7 @@
             </ion-label>
             <ion-icon
               v-if="ehFavorito(item.id)"
-              :icon="star"
+              :icon="heart"
               slot="end"
               class="hc-fav-mark"
               aria-hidden="true"
@@ -114,16 +122,32 @@
               aria-hidden="true"
             />
           </ion-item>
+          <div
+            v-if="bottomPad > 0"
+            :style="{ height: bottomPad + 'px' }"
+            aria-hidden="true"
+          />
         </ion-list>
 
         <footer class="hc-powered">
-          Powered by
-          <a
-            href="https://brunnocamargoramos.github.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            >BCR</a
-          >
+          <div>
+            Powered by
+            <a
+              href="https://brunnocamargoramos.github.io"
+              target="_blank"
+              rel="noopener noreferrer"
+              >BCR</a
+            >
+          </div>
+          <div class="hc-licenca">
+            Licenciado sob
+            <a
+              href="https://github.com/brunnocamargoramos/harpa_crista/blob/master/LICENSE"
+              target="_blank"
+              rel="noopener noreferrer"
+              >MIT</a
+            >
+          </div>
         </footer>
       </template>
 
@@ -132,6 +156,7 @@
         slot="fixed"
         vertical="bottom"
         horizontal="end"
+        class="hc-fab-topo"
       >
         <ion-fab-button size="small" @click="voltarTopo">
           <ion-icon :icon="chevronUp" />
@@ -142,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   IonPage,
@@ -157,13 +182,14 @@ import {
   IonFab,
   IonFabButton,
   IonSpinner,
+  onIonViewDidEnter,
 } from '@ionic/vue'
 import {
   chevronForward,
   chevronUp,
+  heart,
+  heartOutline,
   musicalNotesOutline,
-  star,
-  starOutline,
 } from 'ionicons/icons'
 import { Preferences } from '@capacitor/preferences'
 import { useHinos } from '@/composables/useHinos'
@@ -190,6 +216,14 @@ const buscar = ref('')
 const filtroFav = ref(false)
 const mostrarTopo = ref(false)
 const contentRef = ref<{ $el: HTMLElement } | null>(null)
+const listRef = ref<{ $el: HTMLElement } | null>(null)
+
+const ITEM_HEIGHT = 72
+const BUFFER = 6
+const scrollTop = ref(0)
+const viewportH = ref(typeof window !== 'undefined' ? window.innerHeight : 800)
+const listOffset = ref(0)
+const scrollMemo = ref(0)
 
 function normalizar(texto: string): string {
   return texto
@@ -235,9 +269,13 @@ const itemsFiltrados = computed(() => {
 
 const quickJump = computed(() => {
   const termo = buscar.value?.trim() ?? ''
-  if (!/^\d+$/.test(termo)) return null
-  const id = Number.parseInt(termo, 10)
-  return hinos.value.find((h) => h.id === id) ?? null
+  if (!termo) return null
+  if (/^\d+$/.test(termo)) {
+    const id = Number.parseInt(termo, 10)
+    return hinos.value.find((h) => h.id === id) ?? null
+  }
+  if (itemsFiltrados.value.length === 1) return itemsFiltrados.value[0]
+  return null
 })
 
 const recentesItems = computed(() => {
@@ -247,19 +285,104 @@ const recentesItems = computed(() => {
     .filter((h): h is NonNullable<typeof h> => Boolean(h))
 })
 
+const totalItems = computed(() => itemsFiltrados.value.length)
+
+const visibleStart = computed(() => {
+  const offset = scrollTop.value - listOffset.value
+  const inicio = Math.floor(offset / ITEM_HEIGHT) - BUFFER
+  return Math.max(0, Math.min(totalItems.value, inicio))
+})
+
+const visibleEnd = computed(() => {
+  const offset = scrollTop.value - listOffset.value + viewportH.value
+  const fim = Math.ceil(offset / ITEM_HEIGHT) + BUFFER
+  return Math.max(
+    Math.min(totalItems.value, visibleStart.value + 1),
+    Math.min(totalItems.value, fim),
+  )
+})
+
+const itemsVisiveis = computed(() =>
+  itemsFiltrados.value.slice(visibleStart.value, visibleEnd.value),
+)
+
+const topPad = computed(() => visibleStart.value * ITEM_HEIGHT)
+const bottomPad = computed(
+  () => Math.max(0, totalItems.value - visibleEnd.value) * ITEM_HEIGHT,
+)
+
+function getScrollEl(): HTMLElement | null {
+  const el = contentRef.value?.$el as
+    | (HTMLElement & { scrollEl?: HTMLElement })
+    | undefined
+  if (!el) return null
+  if (el.scrollEl) return el.scrollEl
+  return el.shadowRoot?.querySelector<HTMLElement>('.inner-scroll') ?? null
+}
+
+function medirLista() {
+  const scrollEl = getScrollEl()
+  const lista = listRef.value?.$el
+  if (!scrollEl || !lista) return
+  const rectScroll = scrollEl.getBoundingClientRect()
+  const rectLista = lista.getBoundingClientRect()
+  listOffset.value = rectLista.top - rectScroll.top + scrollEl.scrollTop
+  viewportH.value = scrollEl.clientHeight || viewportH.value
+}
+
+function onResize() {
+  medirLista()
+}
+
 onMounted(async () => {
   await Promise.all([buscarHinos(), carregarRecentes(), carregarFavs()])
   const { value } = await Preferences.get({ key: 'busca' })
   if (value) buscar.value = value
+  await nextTick()
+  medirLista()
+  window.addEventListener('resize', onResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', onResize)
+})
+
+onIonViewDidEnter(async () => {
+  await nextTick()
+  medirLista()
+  if (scrollMemo.value > 0) {
+    const el = contentRef.value?.$el as
+      | (HTMLElement & {
+          scrollToPoint?: (x: number, y: number, d?: number) => Promise<void>
+        })
+      | undefined
+    await el?.scrollToPoint?.(0, scrollMemo.value, 0)
+  }
 })
 
 watch(buscar, async (novo) => {
   await Preferences.set({ key: 'busca', value: novo ?? '' })
+  await nextTick()
+  medirLista()
+})
+
+watch(filtroFav, async () => {
+  await nextTick()
+  medirLista()
+})
+
+watch(itemsFiltrados, async () => {
+  await nextTick()
+  medirLista()
 })
 
 function abrirHino(id: number) {
   haptics.leve()
-  router.push({ name: 'hino', params: { id: id.toString() } })
+  scrollMemo.value = scrollTop.value
+  const termo = buscar.value?.trim()
+  const query =
+    termo && !/^\d+$/.test(termo) ? { q: termo } : undefined
+  router.push({ name: 'hino', params: { id: id.toString() }, query })
 }
 
 function alternarFiltroFav() {
@@ -273,6 +396,7 @@ async function limparRecentes() {
 }
 
 function onScroll(ev: CustomEvent<{ scrollTop: number }>) {
+  scrollTop.value = ev.detail.scrollTop
   mostrarTopo.value = ev.detail.scrollTop > 400
 }
 
@@ -484,7 +608,7 @@ async function voltarTopo() {
 }
 
 .hc-fav-mark {
-  color: var(--ion-color-secondary);
+  color: #e2526a;
   font-size: 1rem;
   margin-right: 6px;
 }
@@ -529,5 +653,14 @@ async function voltarTopo() {
 }
 .hc-powered a:hover {
   text-decoration: underline;
+}
+.hc-powered .hc-licenca {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.hc-fab-topo {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
 }
 </style>

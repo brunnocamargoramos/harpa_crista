@@ -13,20 +13,36 @@
           <ion-button
             v-if="hino"
             :aria-label="favoritado ? 'Remover dos favoritos' : 'Favoritar'"
-            class="hc-fav-btn"
+            class="hc-header-acao"
+            :class="{ 'hc-header-acao-ativa': favoritado }"
             @click="alternarFav"
           >
             <ion-icon
               slot="icon-only"
-              :icon="favoritado ? star : starOutline"
+              :icon="favoritado ? heart : heartOutline"
+            />
+          </ion-button>
+          <ion-button
+            v-if="hino"
+            :aria-label="
+              estaEmAlgumaLista ? 'Editar listas' : 'Adicionar a uma lista'
+            "
+            class="hc-header-acao"
+            :class="{ 'hc-header-acao-ativa': estaEmAlgumaLista }"
+            @click="abrirMinhasListas"
+          >
+            <ion-icon
+              slot="icon-only"
+              :icon="estaEmAlgumaLista ? bookmark : bookmarkOutline"
             />
           </ion-button>
           <ion-button
             v-if="hino && podeCompartilhar"
             aria-label="Compartilhar hino"
+            class="hc-header-acao"
             @click="compartilhar"
           >
-            <ion-icon slot="icon-only" :icon="shareSocialOutline" />
+            <ion-icon slot="icon-only" :icon="paperPlaneOutline" />
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
@@ -43,12 +59,18 @@
       <article v-else-if="hino" class="hc-hino-card" ref="cardRef">
         <div
           class="hino-content"
+          :class="{ 'hc-com-highlight': highlightAtivo }"
           :style="{ fontSize: tamanhoFonte + 'em' }"
           v-html="conteudoFormatado"
+          @touchstart.passive="onPressStart"
+          @touchmove.passive="onPressMove"
+          @touchend="onPressEnd"
+          @touchcancel="onPressEnd"
+          @contextmenu.prevent="onContextMenu"
         ></div>
       </article>
 
-      <div v-else class="hc-empty">
+      <div v-else-if="idValido" class="hc-empty">
         <ion-icon :icon="alertCircleOutline" class="hc-empty-icon" />
         <h3>Hino não encontrado</h3>
       </div>
@@ -112,14 +134,25 @@ import {
   IonIcon,
   IonBackButton,
   IonSpinner,
+  actionSheetController,
+  alertController,
   toastController,
 } from '@ionic/vue'
 import {
   addCircleOutline,
   alertCircleOutline,
+  bookmark,
+  bookmarkOutline,
+  bookmarks,
+  bookmarksOutline,
+  checkmark,
   chevronBack,
   chevronBackCircleOutline,
   chevronForwardCircleOutline,
+  copyOutline,
+  heart,
+  heartOutline,
+  paperPlaneOutline,
   removeCircleOutline,
   shareSocialOutline,
   star,
@@ -132,6 +165,7 @@ import { useHinos, type Hino } from '@/composables/useHinos'
 import { useFavoritos } from '@/composables/useFavoritos'
 import { useRecentes } from '@/composables/useRecentes'
 import { useHaptics } from '@/composables/useHaptics'
+import { useListas } from '@/composables/useListas'
 
 const MIN_FONTE = 0.8
 const MAX_FONTE = 2.4
@@ -143,6 +177,13 @@ const { hinos, carregado, buscarHinos } = useHinos()
 const { ehFavorito, alternar: alternarFavorito, carregar: carregarFavs } =
   useFavoritos()
 const { registrarVisita, carregar: carregarRecentes } = useRecentes()
+const {
+  listas,
+  carregar: carregarListas,
+  criar: criarLista,
+  alternarHino: alternarHinoLista,
+  listasDoHino,
+} = useListas()
 const haptics = useHaptics()
 
 const tamanhoFonte = ref(1.1)
@@ -150,8 +191,10 @@ const cardRef = ref<HTMLElement | null>(null)
 
 const hinoId = computed(() => Number.parseInt(route.params.id as string, 10))
 
+const idValido = computed(() => Number.isFinite(hinoId.value))
+
 const hino = computed<Hino | undefined>(() =>
-  hinos.value.find((h) => h.id === hinoId.value)
+  idValido.value ? hinos.value.find((h) => h.id === hinoId.value) : undefined
 )
 
 const indiceAtual = computed(() =>
@@ -170,26 +213,92 @@ const hinoProximo = computed<Hino | undefined>(() => {
 
 const favoritado = computed(() => (hino.value ? ehFavorito(hino.value.id) : false))
 
+const estaEmAlgumaLista = computed(() => {
+  if (!hino.value) return false
+  // referência usada para reatividade
+  void listas.value
+  return listasDoHino(hino.value.id).length > 0
+})
+
 const podeCompartilhar = computed(
   () => Capacitor.isNativePlatform() || typeof navigator.share === 'function'
 )
 
+const termoBusca = computed(() => {
+  const q = route.query.q
+  if (typeof q !== 'string') return ''
+  return q.trim()
+})
+
+const highlightAtivo = ref(false)
+let timerHighlight: ReturnType<typeof setTimeout> | null = null
+
+function escapeAttr(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function htmlParaTexto(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?strong>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+function aplicarHighlight(html: string, termo: string): string {
+  const palavras = termo
+    .split(/\s+/)
+    .map((p) => p.trim())
+    .filter((p) => p.length >= 2)
+  if (palavras.length === 0) return html
+  const pattern = palavras.map(escapeRegex).join('|')
+  const regex = new RegExp(`(${pattern})(?![^<]*>)`, 'gi')
+  return html.replace(regex, '<mark class="hc-busca-hit">$1</mark>')
+}
+
 const conteudoFormatado = computed(() => {
   if (!hino.value) return ''
   let html = hino.value.conteudo
-  html = html.replace(
-    /(<br\s*\/?>)\s*(\d{1,2})\s*(<br\s*\/?>)/gi,
-    '$1<span class="verso-num">$2</span>$3'
-  )
-  html = html.replace(
-    /(Autor ou Tradutor:[\s\S]*?)$/i,
-    '<div class="hino-autor">$1</div>'
-  )
-  return html
+
+  let blocoAutor = ''
+  const autorMatch = html.match(/Autor ou Tradutor:[\s\S]*$/i)
+  if (autorMatch && autorMatch.index !== undefined) {
+    blocoAutor = `<div class="hino-autor">${autorMatch[0]}</div>`
+    html = html.slice(0, autorMatch.index)
+  }
+
+  const partes = html.split(/(?:<br\s*\/?>\s*){2,}/gi)
+  const blocos = partes
+    .map((parte) => {
+      const trecho = htmlParaTexto(parte)
+      if (!trecho) return ''
+      const interior = parte.replace(
+        /(^|<br\s*\/?>)\s*(\d{1,2})\s*(<br\s*\/?>)/gi,
+        '$1<span class="verso-num">$2</span>$3',
+      )
+      return `<div class="hc-estrofe" data-trecho="${escapeAttr(trecho)}">${interior}</div>`
+    })
+    .filter(Boolean)
+    .join('')
+
+  let saida = blocos + blocoAutor
+  if (termoBusca.value) saida = aplicarHighlight(saida, termoBusca.value)
+  return saida
 })
 
 async function carregar() {
-  await Promise.all([buscarHinos(), carregarFavs(), carregarRecentes()])
+  await Promise.all([
+    buscarHinos(),
+    carregarFavs(),
+    carregarRecentes(),
+    carregarListas(),
+  ])
   if (hino.value) registrarVisita(hino.value.id)
   const { value } = await Preferences.get({ key: 'tamanhoFonte' })
   if (value) {
@@ -211,6 +320,35 @@ onUnmounted(() => {
 
 watch(hinoId, (id) => {
   if (Number.isFinite(id)) registrarVisita(id)
+})
+
+function ativarHighlight() {
+  if (timerHighlight !== null) clearTimeout(timerHighlight)
+  highlightAtivo.value = true
+  timerHighlight = setTimeout(() => {
+    highlightAtivo.value = false
+    timerHighlight = null
+  }, 5000)
+}
+
+watch(
+  [hinoId, termoBusca, carregado],
+  () => {
+    if (!termoBusca.value) {
+      highlightAtivo.value = false
+      if (timerHighlight !== null) {
+        clearTimeout(timerHighlight)
+        timerHighlight = null
+      }
+      return
+    }
+    if (carregado.value && hino.value) ativarHighlight()
+  },
+  { immediate: true },
+)
+
+onUnmounted(() => {
+  if (timerHighlight !== null) clearTimeout(timerHighlight)
 })
 
 watch(tamanhoFonte, async (novo) => {
@@ -238,6 +376,78 @@ async function alternarFav() {
   await toast.present()
 }
 
+async function abrirMinhasListas() {
+  if (!hino.value) return
+  haptics.leve()
+  const hinoId = hino.value.id
+  const todas = listas.value
+  const buttons = todas.map((l) => {
+    const dentro = l.hinos.includes(hinoId)
+    return {
+      text: l.nome,
+      icon: dentro ? checkmark : bookmarksOutline,
+      cssClass: dentro ? 'hc-acao-ativa' : '',
+      handler: async () => {
+        const adicionou = await alternarHinoLista(l.id, hinoId)
+        haptics.leve()
+        await mostrarToast(
+          adicionou
+            ? `Adicionado em "${l.nome}"`
+            : `Removido de "${l.nome}"`,
+        )
+      },
+    }
+  })
+  buttons.push({
+    text: todas.length === 0 ? 'Criar primeira lista' : 'Criar nova lista...',
+    icon: addCircleOutline,
+    cssClass: '',
+    handler: async () => {
+      await abrirCriarLista()
+    },
+  })
+  const sheet = await actionSheetController.create({
+    header: todas.length === 0 ? 'Você ainda não tem listas' : 'Minhas listas',
+    subHeader:
+      todas.length === 0
+        ? 'Crie uma coleção para organizar seus hinos.'
+        : 'Toque para adicionar ou remover deste hino',
+    buttons: [...buttons, { text: 'Cancelar', role: 'cancel' }],
+  })
+  await sheet.present()
+}
+
+async function abrirCriarLista() {
+  if (!hino.value) return
+  const hinoId = hino.value.id
+  const alert = await alertController.create({
+    header: 'Nova lista',
+    inputs: [
+      {
+        name: 'nome',
+        type: 'text',
+        placeholder: 'Ex.: Culto de Domingo',
+        attributes: { maxlength: 60, autocapitalize: 'sentences' },
+      },
+    ],
+    buttons: [
+      { text: 'Cancelar', role: 'cancel' },
+      {
+        text: 'Criar',
+        handler: async (dados) => {
+          const nova = await criarLista(dados.nome)
+          if (nova) {
+            await alternarHinoLista(nova.id, hinoId)
+            haptics.medio()
+            await mostrarToast(`Adicionado em "${nova.nome}"`)
+          }
+        },
+      },
+    ],
+  })
+  await alert.present()
+}
+
 async function compartilhar() {
   if (!hino.value) return
   const texto = hino.value.conteudo
@@ -260,6 +470,149 @@ function irPara(destino: Hino | undefined) {
   if (!destino) return
   haptics.leve()
   router.replace({ name: 'hino', params: { id: destino.id.toString() } })
+}
+
+const PRESS_DURATION = 500
+const PRESS_MOVE_TOLERANCE = 12
+let pressTimer: ReturnType<typeof setTimeout> | null = null
+let pressTrecho: string | null = null
+let pressStartX = 0
+let pressStartY = 0
+
+function cancelarPress() {
+  if (pressTimer !== null) {
+    clearTimeout(pressTimer)
+    pressTimer = null
+  }
+  pressTrecho = null
+}
+
+function onPressStart(ev: TouchEvent) {
+  const t = ev.touches[0]
+  if (!t) return
+  const alvo = (ev.target as HTMLElement | null)?.closest(
+    '.hc-estrofe',
+  ) as HTMLElement | null
+  if (!alvo) return
+  const trecho = alvo.dataset.trecho
+  if (!trecho) return
+  pressTrecho = trecho
+  pressStartX = t.clientX
+  pressStartY = t.clientY
+  pressTimer = setTimeout(() => {
+    if (pressTrecho) abrirAcoesEstrofe(pressTrecho)
+    cancelarPress()
+  }, PRESS_DURATION)
+}
+
+function onPressMove(ev: TouchEvent) {
+  if (pressTimer === null) return
+  const t = ev.touches[0]
+  if (!t) return
+  if (
+    Math.abs(t.clientX - pressStartX) > PRESS_MOVE_TOLERANCE ||
+    Math.abs(t.clientY - pressStartY) > PRESS_MOVE_TOLERANCE
+  ) {
+    cancelarPress()
+  }
+}
+
+function onPressEnd() {
+  cancelarPress()
+}
+
+function onContextMenu(ev: MouseEvent) {
+  const alvo = (ev.target as HTMLElement | null)?.closest(
+    '.hc-estrofe',
+  ) as HTMLElement | null
+  const trecho = alvo?.dataset.trecho
+  if (trecho) abrirAcoesEstrofe(trecho)
+}
+
+async function abrirAcoesEstrofe(trecho: string) {
+  haptics.medio()
+  const previa = trecho.length > 80 ? trecho.slice(0, 77) + '...' : trecho
+  const sheet = await actionSheetController.create({
+    header: 'Trecho selecionado',
+    subHeader: previa,
+    buttons: [
+      {
+        text: 'Compartilhar trecho',
+        icon: shareSocialOutline,
+        handler: () => {
+          compartilharTrecho(trecho)
+        },
+      },
+      {
+        text: 'Copiar texto',
+        icon: copyOutline,
+        handler: () => {
+          copiarTrecho(trecho)
+        },
+      },
+      { text: 'Cancelar', role: 'cancel' },
+    ],
+  })
+  await sheet.present()
+}
+
+async function compartilharTrecho(trecho: string) {
+  if (!hino.value) return
+  const titulo = `Hino ${hino.value.id} — ${hino.value.titulo}`
+  const corpo = `${trecho}\n\n— ${titulo}`
+  try {
+    if (Capacitor.isNativePlatform()) {
+      await Share.share({ title: titulo, text: corpo })
+    } else if (typeof navigator.share === 'function') {
+      await navigator.share({ title: titulo, text: corpo })
+    } else {
+      await copiarTexto(corpo)
+      await mostrarToast('Trecho copiado')
+    }
+  } catch {
+    /* usuário cancelou */
+  }
+}
+
+async function copiarTrecho(trecho: string) {
+  if (!hino.value) return
+  const titulo = `Hino ${hino.value.id} — ${hino.value.titulo}`
+  const ok = await copiarTexto(`${trecho}\n\n— ${titulo}`)
+  if (ok) await mostrarToast('Trecho copiado')
+}
+
+async function copiarTexto(texto: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(texto)
+      return true
+    }
+  } catch {
+    /* fallback abaixo */
+  }
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = texto
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+    return true
+  } catch {
+    return false
+  }
+}
+
+async function mostrarToast(mensagem: string) {
+  const toast = await toastController.create({
+    message: mensagem,
+    duration: 1500,
+    position: 'bottom',
+    color: 'dark',
+  })
+  await toast.present()
 }
 
 let touchStartX = 0
@@ -352,9 +705,38 @@ function removerSwipe() {
   font-variant-numeric: tabular-nums;
 }
 
-.hc-fav-btn {
+.hc-header-acao {
+  --color: rgba(255, 255, 255, 0.78);
+  --color-hover: #ffffff;
+  --color-activated: #ffffff;
+  --background-hover: rgba(255, 255, 255, 0.1);
+  --background-activated: rgba(255, 255, 255, 0.18);
+  --border-radius: 10px;
+  --padding-start: 8px;
+  --padding-end: 8px;
+  font-size: 1.05rem;
+  height: 38px;
+  width: 38px;
+  margin: 0 2px;
+  transition: color 200ms;
+}
+.hc-header-acao-ativa {
   --color: #ffffff;
-  font-size: 1.25rem;
+}
+.hc-header-acao-ativa ion-icon {
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.35));
+  animation: hc-pulso 360ms ease;
+}
+@keyframes hc-pulso {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .hc-empty {
@@ -368,5 +750,33 @@ function removerSwipe() {
   color: var(--ion-color-primary);
   opacity: 0.6;
   margin-bottom: 16px;
+}
+
+.hino-content :deep(.hc-estrofe) {
+  padding: 4px 0;
+  border-radius: 6px;
+  transition: background-color 200ms;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.hino-content :deep(.hc-estrofe:active) {
+  background: var(--hc-divider);
+}
+
+.hino-content :deep(.hc-busca-hit) {
+  background: transparent;
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 2px;
+  transition: background-color 700ms ease, color 700ms ease;
+}
+.hino-content.hc-com-highlight :deep(.hc-busca-hit) {
+  background: rgba(255, 213, 79, 0.55);
+  color: #1c1c1c;
+}
+:root.dark .hino-content.hc-com-highlight :deep(.hc-busca-hit) {
+  background: rgba(255, 213, 79, 0.35);
+  color: inherit;
 }
 </style>

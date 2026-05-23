@@ -13,6 +13,7 @@
 [![Ionic](https://img.shields.io/badge/Ionic-8-3880ff?logo=ionic&logoColor=white)](https://ionicframework.com)
 [![Capacitor](https://img.shields.io/badge/Capacitor-7-119eff?logo=capacitor&logoColor=white)](https://capacitorjs.com)
 [![PWA](https://img.shields.io/badge/PWA-Ready-5a0fc8?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat)](LICENSE)
 
 </div>
 
@@ -124,6 +125,13 @@ android/            # Projeto nativo (gerado pelo Capacitor)
 .github/workflows/  # CI: Android APK + GitHub Pages
 scripts/            # Geradores de ícones e JSON
 ```
+
+## 📄 Licença
+
+Distribuído sob a licença **MIT** — veja [LICENSE](LICENSE) para detalhes.
+
+A letra dos hinos é de domínio público; o código é livre para uso, modificação e redistribuição,
+desde que o aviso de copyright e a licença sejam preservados.
 
 ---
 

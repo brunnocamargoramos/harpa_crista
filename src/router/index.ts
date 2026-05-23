@@ -13,6 +13,21 @@ const routes: RouteRecordRaw[] = [
     name: 'hino',
     component: () => import('@/views/HinoView.vue'),
   },
+  {
+    path: '/listas',
+    name: 'listas',
+    component: () => import('@/views/ListasView.vue'),
+  },
+  {
+    path: '/listas/:id',
+    name: 'lista',
+    component: () => import('@/views/ListaView.vue'),
+  },
+  {
+    path: '/sobre',
+    name: 'sobre',
+    component: () => import('@/views/SobreView.vue'),
+  },
 ]
 
 const router = createRouter({

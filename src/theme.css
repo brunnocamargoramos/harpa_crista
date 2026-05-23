@@ -33,6 +33,84 @@
   --hc-paper: #faf6ec;
 }
 
+html.sepia {
+  --ion-background-color: #f4ecd8;
+  --ion-background-color-rgb: 244, 236, 216;
+  --ion-text-color: #4b3a26;
+  --ion-text-color-rgb: 75, 58, 38;
+  --ion-toolbar-background: #6e5436;
+  --ion-item-background: #fbf3df;
+
+  --ion-color-primary: #8c6b3d;
+  --ion-color-primary-rgb: 140, 107, 61;
+  --ion-color-primary-contrast: #fbf3df;
+  --ion-color-primary-contrast-rgb: 251, 243, 223;
+  --ion-color-primary-shade: #7b5e35;
+  --ion-color-primary-tint: #997a50;
+
+  --ion-color-secondary: #6e5436;
+  --ion-color-secondary-rgb: 110, 84, 54;
+  --ion-color-secondary-contrast: #fbf3df;
+  --ion-color-secondary-shade: #614a30;
+  --ion-color-secondary-tint: #82654a;
+
+  --hc-card-shadow: 0 1px 3px rgba(75, 58, 38, 0.1),
+    0 1px 2px rgba(75, 58, 38, 0.05);
+  --hc-card-shadow-hover: 0 4px 12px rgba(75, 58, 38, 0.15);
+  --hc-divider: rgba(75, 58, 38, 0.12);
+  --hc-muted: #8a7355;
+  --hc-chorus-bg: rgba(140, 107, 61, 0.1);
+  --hc-chorus-border: #8c6b3d;
+  --hc-paper: #f4ecd8;
+}
+
+html ion-action-sheet,
+html ion-alert,
+html ion-popover,
+html ion-modal,
+html ion-toast {
+  --ion-overlay-background-color: var(--ion-item-background);
+}
+
+html ion-action-sheet {
+  --background: var(--ion-item-background) !important;
+  --color: var(--ion-text-color) !important;
+  --button-color: var(--ion-text-color) !important;
+  --button-color-activated: var(--ion-text-color) !important;
+  --button-color-focused: var(--ion-text-color) !important;
+  --button-color-hover: var(--ion-text-color) !important;
+  --button-color-selected: var(--ion-color-primary) !important;
+  --button-background: var(--ion-item-background) !important;
+  --button-background-activated: var(--hc-divider) !important;
+  --button-background-focused: var(--hc-divider) !important;
+  --button-background-hover: var(--hc-divider) !important;
+  --button-background-selected: var(--hc-divider) !important;
+}
+
+html ion-alert {
+  --background: var(--ion-item-background) !important;
+}
+html ion-alert .alert-wrapper,
+html ion-alert .alert-head,
+html ion-alert .alert-message,
+html ion-alert .alert-title,
+html ion-alert .alert-sub-title,
+html ion-alert .alert-input,
+html ion-alert .alert-button,
+html ion-alert .alert-radio-label,
+html ion-alert .alert-checkbox-label {
+  color: var(--ion-text-color) !important;
+  background: transparent;
+}
+html ion-alert .alert-input {
+  background: var(--hc-divider) !important;
+  border-color: var(--hc-divider) !important;
+}
+html ion-alert button.alert-button.ion-focused,
+html ion-alert button.alert-button.ion-activated {
+  background: var(--hc-divider) !important;
+}
+
 html.dark {
   --ion-background-color: #0d1f1d;
   --ion-background-color-rgb: 13, 31, 29;

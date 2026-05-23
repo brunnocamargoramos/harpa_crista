@@ -44,6 +44,18 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Restaurar keystore debug compartilhada
+        env:
+          DEBUG_KEYSTORE: ${{ secrets.DEBUG_KEYSTORE }}
+        run: |
+          if [ -n "$DEBUG_KEYSTORE" ]; then
+            mkdir -p ~/.android
+            echo "$DEBUG_KEYSTORE" | base64 -d > ~/.android/debug.keystore
+            echo "Keystore compartilhada restaurada em ~/.android/debug.keystore"
+          else
+            echo "Secret DEBUG_KEYSTORE nao configurado - cada build usara keystore propria (incompativel entre builds)"
+          fi
+
       - name: Grant execute on gradlew
         working-directory: android
         run: chmod +x ./gradlew

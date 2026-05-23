@@ -4,4 +4,6 @@
     <string name="title_activity_main">Harpa Cristã</string>
     <string name="package_name">org.harpacrista.app</string>
     <string name="custom_url_scheme">org.harpacrista.app</string>
+    <string name="widget_descricao">Hino do dia — uma estrofe diferente a cada dia</string>
+    <string name="widget_label">HINO DO DIA</string>
 </resources>

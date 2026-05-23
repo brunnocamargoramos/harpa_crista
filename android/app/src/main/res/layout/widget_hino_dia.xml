@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/widget_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="HINO DO DIA"
+        android:textColor="#FAF6EC"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.15"
+        android:alpha="0.7" />
+
+    <TextView
+        android:id="@+id/widget_estrofe"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:lineSpacingExtra="2dp"
+        android:fontFamily="serif"
+        android:gravity="center_vertical"
+        android:maxLines="6"
+        android:ellipsize="end" />
+
+    <View
+        android:layout_width="36dp"
+        android:layout_height="2dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="6dp"
+        android:background="#FAF6EC"
+        android:alpha="0.4" />
+
+    <TextView
+        android:id="@+id/widget_titulo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#FAF6EC"
+        android:textSize="11sp"
+        android:alpha="0.95"
+        android:singleLine="true"
+        android:ellipsize="end" />
+</LinearLayout>
